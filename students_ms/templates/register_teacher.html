@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}New Teacher{% endblock %}
+
+{% block content %}
+<h3>Add Teacher</h3>
+<form method="post" class="col-md-5">
+    <input class="form-control mb-2" name="name" placeholder="Name" required>
+    <input class="form-control mb-2" name="email" placeholder="Email" required>
+    <input class="form-control mb-2" type="password" name="password" placeholder="Password" required>
+    <button class="btn btn-primary">Create Teacher</button>
+</form>
+{% endblock %}

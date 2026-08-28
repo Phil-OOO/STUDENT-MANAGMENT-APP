@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold text-[var(--gcc-red)] mb-4">Student Fees</h1>
+
+    <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table class="min-w-full table-auto">
+            <thead class="bg-[var(--gcc-red)] text-white">
+                <tr>
+                    <th class="px-4 py-2">Term / Year</th>
+                    <th class="px-4 py-2">Total Fee</th>
+                    <th class="px-4 py-2">Total Paid</th>
+                    <th class="px-4 py-2">Balance</th>
+                    <th class="px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fee in fees %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-2">{{ fee.term }} / {{ fee.academic_year }}</td>
+                    <td class="px-4 py-2 font-medium">{{ fee.total_fee }}</td>
+                    <td class="px-4 py-2 text-green-600 font-medium">{{ fee.total_paid }}</td>
+                    <td class="px-4 py-2 text-red-600 font-medium">{{ fee.balance }}</td>
+                    <td class="px-4 py-2">
+                        {% if fee.balance > 0 %}
+                        <div x-data="{ openModal: false }">
+                            <button @click="openModal = true"
+                                    class="bg-purple-500 text-white px-2 py-1 rounded text-sm hover:bg-purple-600">
+                                Record Payment
+                            </button>
+
+                            <!-- Modal -->
+                            <div x-show="openModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                <div @click.away="openModal = false"
+                                     class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+                                    <h3 class="text-lg font-semibold text-[var(--gcc-red)] mb-4">Record Payment</h3>
+
+                                    <form action="{{ url_for('record_payment', student_fee_id=fee.student_fee_id) }}" method="POST" class="flex flex-col gap-3">
+                                        <input type="number" name="amount" step="0.01" min="0.01" max="{{ fee.balance }}" required placeholder="Amount"
+                                               class="border border-gray-300 rounded px-2 py-1">
+                                        <select name="method" class="border border-gray-300 rounded px-2 py-1">
+                                            <option value="Cash">Cash</option>
+                                            <option value="Mobile Money">Mobile Money</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                        </select>
+                                        <div class="flex justify-end gap-2 mt-2">
+                                            <button type="button" @click="openModal = false"
+                                                    class="px-3 py-1 border rounded hover:bg-gray-100">Cancel</button>
+                                            <button type="submit"
+                                                    class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600">
+                                                Submit
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-400 text-sm">Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Payment history -->
+                {% if fee.payments %}
+                <tr class="bg-gray-50">
+                    <td colspan="5" class="px-4 py-2">
+                        <strong>Payment History:</strong>
+                        <ul class="list-disc list-inside text-sm mt-1">
+                            {% for p in fee.payments %}
+                            <li>{{ p.amount_paid }} via {{ p.payment_method }} on {{ p.payment_date.strftime('%Y-%m-%d') }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endif %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-gray-500">No fees assigned.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Alpine.js for modal -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+{% endblock %}

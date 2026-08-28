@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Register School{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 bg-white shadow-lg rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-[var(--gcc-red)] text-center mb-6">Register School</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label for="name" class="block font-medium mb-1">School Name</label>
+            <input type="text" name="name" id="name" required
+                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--gcc-red)]">
+        </div>
+
+        <div>
+            <label for="email" class="block font-medium mb-1">Email</label>
+            <input type="email" name="email" id="email" required
+                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--gcc-red)]">
+        </div>
+
+        <div>
+            <label for="password" class="block font-medium mb-1">Password</label>
+            <input type="password" name="password" id="password" required
+                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--gcc-red)]">
+        </div>
+
+        <!--  Logo upload -->
+        <div>
+            <label for="logo" class="block font-medium mb-1">
+                School Logo 
+                <span class="text-gray-400 text-sm font-normal">(optional)</span>
+            </label>
+            <input type="file" name="logo" id="logo" accept="image/*"
+                   class="w-full border rounded px-3 py-2 text-sm text-gray-600
+                          file:mr-4 file:py-1 file:px-3 file:rounded file:border-0
+                          file:bg-[var(--gcc-red)] file:text-white file:text-sm
+                          hover:file:bg-red-700 cursor-pointer">
+            <p class="text-xs text-gray-400 mt-1">Accepted: png, jpg, jpeg, gif. Max recommended: 2MB.</p>
+        </div>
+
+        <!--  Live logo preview -->
+        <div id="logoPreview" class="hidden flex justify-center">
+            <img id="previewImg" src="#" alt="Logo Preview"
+                 class="w-24 h-24 rounded-full object-cover border-4 border-[var(--gcc-red)]">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-[var(--gcc-red)] text-white font-bold py-2 rounded hover:bg-red-700 transition">
+            Register
+        </button>
+
+        <p class="text-center text-gray-600 mt-4 text-sm">
+            Already have an account? 
+            <a href="{{ url_for('login') }}" class="text-[var(--gcc-red)] hover:underline">Login</a>
+        </p>
+    </form>
+</div>
+
+<script>
+    //  Show preview before upload
+    document.getElementById("logo").addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("previewImg").src = e.target.result;
+                document.getElementById("logoPreview").classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

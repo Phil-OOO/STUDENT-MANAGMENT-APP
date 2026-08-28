@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-6 py-6">
+
+<h1 class="text-2xl font-bold text-[var(--gcc-red)] mb-6">
+Revenue Analytics
+</h1>
+<a href="{{ url_for('export_revenue') }}"
+   class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded">
+   Export CSV
+</a>
+<!-- KPI CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-sm text-gray-500">Total Revenue</h2>
+    <p class="text-2xl font-bold text-green-600">
+        GHS {{ "{:,.2f}".format(total_revenue) }}
+    </p>
+  </div>
+
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-sm text-gray-500">Total Students</h2>
+    <p class="text-2xl font-bold text-blue-600">
+      {{ total_students }}
+    </p>
+  </div>
+
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-sm text-gray-500">Avg Revenue per Student</h2>
+    <p class="text-2xl font-bold text-purple-600">
+        GHS {{ (total_revenue / total_students) | round(2) if total_students else 0 }}
+    </p>
+  </div>
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-sm text-gray-500">Outstanding Revenue</h2>
+    <p class="text-2xl font-bold text-red-600">
+        GHS {{ "{:,.2f}".format(total_outstanding) }}
+    </p>
+  </div>
+  
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-sm text-gray-500">Collection Rate</h2>
+    <p class="text-2xl font-bold text-indigo-600">
+      {{ collection_rate }}%
+    </p>
+  </div>
+</div>
+
+<!-- OUTSTANDING STUDENTS -->
+<div class="bg-white p-6 rounded shadow mt-8">
+    <h2 class="text-lg font-semibold mb-4 text-red-600">
+      Students With Outstanding Balance
+    </h2>
+  
+    <table class="min-w-full">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="px-4 py-2 text-left">Student</th>
+          <th class="px-4 py-2 text-left">Total Fee</th>
+          <th class="px-4 py-2 text-left">Paid</th>
+          <th class="px-4 py-2 text-left">Balance</th>
+          <th class="px-4 py-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in outstanding_students %}
+        <tr class="border-b">
+          <td class="px-4 py-2">
+            {{ s.first_name }} {{ s.last_name }}
+          </td>
+  
+          <td class="px-4 py-2">
+            GHS {{ "{:,.2f}".format(s.total_fee) }}
+          </td>
+  
+          <td class="px-4 py-2 text-green-600">
+            GHS {{ "{:,.2f}".format(s.total_paid) }}
+          </td>
+  
+          <td class="px-4 py-2 text-red-600 font-semibold">
+            GHS {{ "{:,.2f}".format(s.balance) }}
+          </td>
+  
+          <td class="px-4 py-2">
+            {% if s.total_paid == 0 %}
+                <span class="text-red-600 font-semibold">Not Paid</span>
+            {% else %}
+                <span class="text-yellow-600 font-semibold">Partial</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center py-4 text-gray-500">
+            All students have fully paid 🎉
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+<!-- REVENUE CHART -->
+<div class="bg-white p-6 rounded shadow mb-8">
+  <h2 class="text-lg font-semibold mb-4">Monthly Revenue Trend</h2>
+  <canvas id="revenueChart"></canvas>
+</div>
+
+<!-- TOP STUDENTS -->
+<div class="bg-white p-6 rounded shadow">
+  <h2 class="text-lg font-semibold mb-4">Top Paying Students</h2>
+
+  <table class="min-w-full">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="px-4 py-2 text-left">Student</th>
+        <th class="px-4 py-2 text-left">Total Paid</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in top_students %}
+      <tr class="border-b">
+        <td class="px-4 py-2">
+          {{ s.first_name }} {{ s.last_name }}
+        </td>
+        <td class="px-4 py-2 text-green-600 font-semibold">
+          {{ s.total_paid }}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="2" class="text-center py-4 text-gray-500">
+          No payment data yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('revenueChart');
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ monthly_data | map(attribute='month') | list | tojson }},
+        datasets: [{
+            label: 'Revenue (GHS)',
+            data: {{ monthly_data | map(attribute='total') | list | tojson }},
+            borderColor: '#B91C1C',
+            backgroundColor: 'rgba(185, 28, 28, 0.1)',
+            tension: 0.3,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
+{% endblock %}

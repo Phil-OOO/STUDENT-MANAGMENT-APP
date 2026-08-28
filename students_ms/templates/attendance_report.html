@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <h1 class="text-2xl font-bold text-[var(--gcc-red)] mb-4">
+    Attendance Report - {{ student.first_name }} {{ student.last_name }}
+  </h1>
+
+  <div class="mb-4">
+    <p><strong>Total Days:</strong> {{ total_days }}</p>
+    <p><strong>Present:</strong> {{ present_days }}</p>
+    <p><strong>Absent:</strong> {{ absent_days }}</p>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+      <thead class="bg-[var(--gcc-red)] text-white">
+        <tr>
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">Date</th>
+          <th class="px-4 py-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in attendance_records %}
+        <tr class="border-b hover:bg-gray-50">
+          <td class="px-4 py-2">{{ loop.index }}</td>
+          <td class="px-4 py-2">{{ record.date.strftime("%Y-%m-%d") }}</td>
+          <td class="px-4 py-2">{{ record.status|capitalize }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="3" class="text-center py-4 text-gray-500">No attendance records found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="POST">
+    <input name="class_name" placeholder="Class Name" required>
+    <input name="academic_year" placeholder="Academic Year" required>
+    <input name="term" placeholder="Term" required>
+    <input name="total_fee" type="number" step="0.01" placeholder="Total Fee" required>
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}

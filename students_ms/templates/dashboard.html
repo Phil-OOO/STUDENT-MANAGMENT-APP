@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+  <h1 class="text-3xl font-bold text-[var(--gcc-red)]">Dashboard</h1>
+
+  <!--  Quick action buttons for admin -->
+  {% if current_user.is_admin() %}
+  <div class="flex flex-wrap gap-2">
+    <a href="{{ url_for('upload_school_logo') }}"
+       class="flex items-center gap-1 bg-white border border-[var(--gcc-red)] text-[var(--gcc-red)] 
+              px-3 py-1.5 rounded hover:bg-[var(--gcc-red)] hover:text-white transition text-sm">
+      <!-- camera icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Upload Logo
+    </a>
+
+    <a href="{{ url_for('student_new') }}"
+       class="bg-[var(--gcc-red)] text-white px-3 py-1.5 rounded hover:bg-red-700 transition text-sm">
+      + Add Student
+    </a>
+
+    <a href="{{ url_for('create_fee') }}"
+       class="bg-[var(--gcc-red)] text-white px-3 py-1.5 rounded hover:bg-red-700 transition text-sm">
+      + Create Fee
+    </a>
+
+    <a href="{{ url_for('teacher_new') }}"
+       class="bg-[var(--gcc-red)] text-white px-3 py-1.5 rounded hover:bg-red-700 transition text-sm">
+      + Add Teacher
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!--  School logo + name banner (shows if logo is set) -->
+{% if current_user.is_authenticated and current_user.school_logo %}
+<div class="flex items-center gap-4 bg-white shadow rounded-lg p-4 mb-6">
+  <img src="{{ url_for('static', filename='uploads/' ~ current_user.school_logo) }}"
+       alt="School Logo"
+       class="w-16 h-16 rounded-full object-cover border-4 border-[var(--gcc-red)]">
+  <div>
+    <p class="text-xl font-bold text-gray-700">{{ current_user.school_name }}</p>
+    <p class="text-sm text-gray-400">{{ current_user.email }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stat Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+
+  <div class="bg-white shadow rounded-lg p-4 border-l-4 border-[var(--gcc-red)]">
+    <h2 class="text-gray-500 text-sm font-semibold mb-1">Total Students</h2>
+    <p class="text-3xl font-bold text-[var(--gcc-red)]">{{ total_students }}</p>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-4 border-l-4 border-blue-500">
+    <h2 class="text-gray-500 text-sm font-semibold mb-1">New This Month</h2>
+    <p class="text-3xl font-bold text-blue-600">{{ new_students }}</p>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-4 border-l-4 border-green-500">
+    <h2 class="text-gray-500 text-sm font-semibold mb-1">Teachers</h2>
+    <p class="text-3xl font-bold text-green-600">{{ teachers }}</p>
+  </div>
+
+  <!--  Link cards to their pages -->
+  <a href="{{ url_for('revenue_dashboard') }}"
+     class="bg-white shadow rounded-lg p-4 border-l-4 border-yellow-500 hover:shadow-md transition block">
+    <h2 class="text-gray-500 text-sm font-semibold mb-1">Revenue Dashboard</h2>
+    <p class="text-sm text-yellow-600 font-semibold mt-1">View →</p>
+  </a>
+
+</div>
+
+<!-- Recent Students -->
+<div class="flex justify-between items-center mb-3">
+  <h2 class="text-xl font-bold text-[var(--gcc-red)]">Recent Students</h2>
+  <a href="{{ url_for('students') }}"
+     class="text-sm text-[var(--gcc-red)] hover:underline">View all →</a>
+</div>
+
+<div class="bg-white shadow rounded-lg overflow-x-auto">
+  <table class="w-full text-left text-sm">
+    <thead class="bg-[var(--gcc-red)] text-white">
+      <tr>
+        <th class="px-4 py-3">First Name</th>
+        <th class="px-4 py-3">Last Name</th>
+        <th class="px-4 py-3">Parent</th>
+        <th class="px-4 py-3">Phone</th>
+        <th class="px-4 py-3">Enrolled</th>
+        <th class="px-4 py-3">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in recent_students %}
+      <tr class="border-t hover:bg-gray-50">
+        <td class="px-4 py-3">
+          <a href="{{ url_for('student_detail', id=s.id) }}"
+             class="text-[var(--gcc-red)] hover:underline font-medium">
+            {{ s.first_name }}
+          </a>
+        </td>
+        <td class="px-4 py-3">{{ s.last_name or '-' }}</td>
+        <td class="px-4 py-3">{{ s.parent_name or '-' }}</td>
+        <td class="px-4 py-3">{{ s.parent_phone or '-' }}</td>
+        <!--  Guard against null created_at -->
+        <td class="px-4 py-3">
+          {{ s.created_at.strftime("%b %d, %Y") if s.created_at else '-' }}
+        </td>
+        <td class="px-4 py-3">
+          <a href="{{ url_for('student_detail', id=s.id) }}"
+             class="text-blue-500 hover:underline text-xs">View</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="px-4 py-6 text-center text-gray-400">No students yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

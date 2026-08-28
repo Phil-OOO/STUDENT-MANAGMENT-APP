@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if current_user.is_authenticated %}{{ current_user.school_name }}{% else %}GCC Students App{% endif %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gcc-red: #E30613;
+            --gcc-red-dark: #b8050f;
+            --gcc-red-light: #ff1a2a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f8f7f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: var(--gcc-red);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 16px rgba(227,6,19,0.18);
+        }
+
+        .navbar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Brand */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.01em;
+            transition: opacity 0.2s;
+        }
+        .brand:hover { opacity: 0.85; }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .brand-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        /* Desktop nav links */
+        .nav-links {
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav-links { display: flex; }
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.88);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .nav-link-logout {
+            color: white;
+            background: rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .nav-link-logout:hover {
+            background: rgba(0,0,0,0.32);
+        }
+
+        /* Hamburger */
+        .hamburger {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            color: white;
+            transition: background 0.15s;
+        }
+        .hamburger:hover { background: rgba(255,255,255,0.25); }
+
+        @media (min-width: 768px) {
+            .hamburger { display: none; }
+        }
+
+        /* Mobile drawer */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            background: var(--gcc-red-dark);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 1.5rem 1rem;
+            gap: 0.25rem;
+        }
+        .mobile-menu.open { display: flex; }
+
+        @media (min-width: 768px) {
+            .mobile-menu { display: none !important; }
+        }
+
+        .mobile-link {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .mobile-link:hover { background: rgba(255,255,255,0.12); color: white; }
+        .mobile-link.logout-mobile {
+            margin-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.15);
+            padding-top: 1rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* ── Flash messages ── */
+        .flash-success {
+            background: #f0fdf4; color: #166534;
+            border: 1px solid #bbf7d0; border-left: 4px solid #16a34a;
+        }
+        .flash-danger {
+            background: #fef2f2; color: #991b1b;
+            border: 1px solid #fecaca; border-left: 4px solid #dc2626;
+        }
+        .flash-info {
+            background: #eff6ff; color: #1e40af;
+            border: 1px solid #bfdbfe; border-left: 4px solid #2563eb;
+        }
+        .flash-warning {
+            background: #fffbeb; color: #92400e;
+            border: 1px solid #fde68a; border-left: 4px solid #d97706;
+        }
+        .flash-msg {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* ── Main content ── */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: white;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+            padding: 1.25rem;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        footer strong { color: var(--gcc-red); }
+
+        /* ── Page fade-in ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .main-content { animation: fadeUp 0.3s ease both; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Navbar ── -->
+    <header class="navbar">
+        <div class="navbar-inner">
+
+            <!-- Brand -->
+            <a href="{{ url_for('dashboard') }}" class="brand">
+                {% if current_user.is_authenticated and current_user.school_logo %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ current_user.school_logo) }}"
+                         alt="Logo" class="brand-logo">
+                {% else %}
+                    <span class="brand-dot">G</span>
+                {% endif %}
+                <span>
+                    {% if current_user.is_authenticated %}
+                        {{ current_user.school_name or "GCC Students App" }}
+                    {% else %}
+                        GCC Students App
+                    {% endif %}
+                </span>
+            </a>
+
+            <!-- Desktop Links -->
+            <nav class="nav-links">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_superadmin() %}
+                        <a href="{{ url_for('superadmin_dashboard') }}" class="nav-link">Dashboard</a>
+                        <a href="{{ url_for('schools') }}" class="nav-link">Schools</a>
+                    {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                        <a href="{{ url_for('students') }}" class="nav-link">Students</a>
+                        <a href="{{ url_for('revenue_dashboard') }}" class="nav-link">Revenue</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link nav-link-logout">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                    <a href="{{ url_for('register') }}" class="nav-link nav-link-logout">Register</a>
+                {% endif %}
+            </nav>
+
+            <!-- Hamburger -->
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <svg id="icon-open" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <svg id="icon-close" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <nav class="mobile-menu" id="mobile-menu">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_superadmin() %}
+                    <a href="{{ url_for('superadmin_dashboard') }}" class="mobile-link">Dashboard</a>
+                    <a href="{{ url_for('schools') }}" class="mobile-link">Schools</a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="mobile-link">Dashboard</a>
+                    <a href="{{ url_for('students') }}" class="mobile-link">Students</a>
+                    <a href="{{ url_for('revenue_dashboard') }}" class="mobile-link">Revenue</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="mobile-link logout-mobile">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="mobile-link">Login</a>
+                <a href="{{ url_for('register') }}" class="mobile-link">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <!-- ── Main ── -->
+    <main class="main-content">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem;">
+                    {% for category, message in messages %}
+                        <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer>
+        &copy; {{ current_year }} <strong>Ghana Code Club</strong>. All rights reserved.
+    </footer>
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const iconOpen   = document.getElementById('icon-open');
+        const iconClose  = document.getElementById('icon-close');
+
+        hamburger.addEventListener('click', () => {
+            const isOpen = mobileMenu.classList.toggle('open');
+            iconOpen.style.display  = isOpen ? 'none'  : 'block';
+            iconClose.style.display = isOpen ? 'block' : 'none';
+        });
+
+        // Close menu on link click (for SPA-like feel)
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+                iconOpen.style.display  = 'block';
+                iconClose.style.display = 'none';
+            });
+        });
+    </script>
+
+</body>
+</html>

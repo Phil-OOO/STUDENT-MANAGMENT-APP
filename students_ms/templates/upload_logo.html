@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Upload School Logo{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 bg-white shadow-lg rounded-lg p-6">
+  <h2 class="text-2xl font-bold text-[var(--gcc-red)] text-center mb-6">Upload School Logo</h2>
+
+  <!-- Current logo preview -->
+  {% if current_user.school_logo %}
+  <div class="flex justify-center mb-6">
+    <div class="text-center">
+      <p class="text-sm text-gray-500 mb-2">Current Logo</p>
+      <img src="{{ url_for('static', filename='uploads/' ~ current_user.school_logo) }}"
+           alt="Current Logo"
+           class="w-24 h-24 rounded-full object-cover border-4 border-[var(--gcc-red)] mx-auto">
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="POST"
+        action="{{ url_for('upload_school_logo') }}"
+        enctype="multipart/form-data"
+        class="space-y-4">
+
+    <div>
+      <label class="block font-medium mb-1">
+        Select New Logo
+        <span class="text-gray-400 text-sm font-normal">(png, jpg, jpeg, gif)</span>
+      </label>
+      <input type="file" name="logo" id="logo" accept="image/*" required
+             class="w-full border rounded px-3 py-2 text-sm text-gray-600
+                    file:mr-4 file:py-1 file:px-3 file:rounded file:border-0
+                    file:bg-[var(--gcc-red)] file:text-white file:text-sm
+                    hover:file:bg-red-700 cursor-pointer">
+    </div>
+
+    <!-- Live preview -->
+    <div id="previewBox" class="hidden flex justify-center">
+      <div class="text-center">
+        <p class="text-sm text-gray-500 mb-2">New Logo Preview</p>
+        <img id="previewImg" src="#" alt="Preview"
+             class="w-24 h-24 rounded-full object-cover border-4 border-[var(--gcc-red)] mx-auto">
+      </div>
+    </div>
+
+    <button type="submit"
+            class="w-full bg-[var(--gcc-red)] text-white font-bold py-2 rounded hover:bg-red-700 transition">
+      Upload Logo
+    </button>
+
+    <a href="{{ url_for('dashboard') }}"
+       class="block text-center text-sm text-gray-500 hover:underline mt-2">
+      Cancel
+    </a>
+  </form>
+</div>
+
+<script>
+  document.getElementById("logo").addEventListener("change", function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById("previewImg").src = e.target.result;
+        document.getElementById("previewBox").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+{% endblock %}

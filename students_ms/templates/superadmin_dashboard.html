@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}All Schools{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-[#FF6F00]">All Schools</h1>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for s in schools %}
+    <div class="bg-white shadow rounded p-4">
+        <h2 class="text-xl font-bold text-[#0B3D91] mb-2">{{ s.name }}</h2>
+        <p class="text-gray-600 mb-1"><strong>Email:</strong> {{ s.email }}</p>
+        <p class="text-gray-600 mb-1"><strong>Teachers:</strong> {{ s.teachers }}</p>
+        <p class="text-gray-600 mb-2"><strong>Students:</strong> {{ s.students }}</p>
+        <div class="flex space-x-2 mt-2">
+            <a href="/superadmin/schools/{{ s.id }}/edit" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600">Edit</a>
+            <form method="post" action="/superadmin/schools/{{ s.id }}/reset-password" class="inline">
+                <button class="bg-yellow-500 text-white px-2 py-1 rounded text-sm hover:bg-yellow-600">Reset Admin PW</button>
+            </form>
+            <form method="post" action="/superadmin/schools/{{ s.id }}/delete" class="inline">
+                <button class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

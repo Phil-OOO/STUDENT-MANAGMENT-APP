@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-[var(--gcc-red)]">Students</h1>
+  </div>
+
+  <!-- Search + Add -->
+  <div class="flex justify-between items-center mb-4">
+    <form method="GET" action="{{ url_for('students') }}" class="flex gap-2">
+      <input
+        type="text"
+        name="search"
+        value="{{ search_query }}"
+        placeholder="Search students by name..."
+        class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[var(--gcc-red)]"
+      >
+      <button type="submit"
+              class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition">
+        Search
+      </button>
+    </form>
+
+    <a href="{{ url_for('student_new') }}"
+       class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition">
+      Add Student
+    </a>
+  </div>
+
+  <!--  Attendance: warns user it only covers currently visible students -->
+  <!-- <div class="mt-6 bg-white p-4 rounded shadow-md">
+    <h2 class="text-lg font-semibold text-[var(--gcc-red)] mb-1">Mark Attendance</h2>
+
+    {% if total_pages > 1 %}
+    <p class="text-sm text-yellow-600 mb-2">
+      ⚠️ You are marking attendance for page {{ page }} of {{ total_pages }}.
+      Make sure to mark all pages or use the
+      <a href="{{ url_for('students', page=1, per_page=9999) }}" class="underline">full list view</a>.
+    </p>
+    {% endif %}
+
+    <form action="{{ url_for('mark_attendance') }}" method="POST" class="flex flex-col gap-2">
+      <div class="flex gap-2 items-center flex-wrap">
+        <label for="attendance_date" class="font-medium">Date:</label>
+        <input type="date" name="attendance_date" id="attendance_date" required
+               class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[var(--gcc-red)]">
+      </div>
+
+      <div class="overflow-x-auto mt-2">
+        <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="px-4 py-2">#</th>
+              <th class="px-4 py-2">Student Name</th>
+             
+              <th class="px-4 py-2">Attendance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            <tr class="border-b">
+              <td class="px-4 py-2">{{ loop.index }}</td>
+              <td class="px-4 py-2">{{ student.first_name }} {{ student.last_name or '' }}</td>
+              <td class="px-4 py-2">
+                <select name="status_{{ student.id }}"
+                        class="border border-gray-300 rounded px-2 py-1">
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                
+                  <option value="Late">Late</option>
+                </select>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <button type="submit"
+              class="mt-2 bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition w-fit">
+        Save Attendance
+      </button>
+    </form>
+  </div> -->
+
+  <!-- Students Table -->
+  <div class="overflow-x-auto mt-6">
+    <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+      <thead class="bg-[var(--gcc-red)] text-white">
+        <tr>
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">First Name</th>
+          <th class="px-4 py-2 text-left">Last Name</th>
+          <th class="px-4 py-2 text-left">Parent Name</th>
+          <th class="px-4 py-2 text-left">Parent Phone</th>
+          <th class="px-4 py-2 text-left">Total Fee</th>
+          <th class="px-4 py-2 text-left">Paid</th>
+          <th class="px-4 py-2 text-left">Balance</th>
+          <th class="px-4 py-2 text-left">Fee Status</th>
+          <th class="px-4 py-2 text-left">Created At</th>
+          <th class="px-4 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr class="border-b hover:bg-gray-50">
+          <td class="px-4 py-2">{{ loop.index }}</td>
+
+          <td class="px-4 py-2">
+            <a href="{{ url_for('student_detail', id=student.id) }}"
+               class="text-[var(--gcc-red)] hover:underline">
+              {{ student.first_name }}
+            </a>
+          </td>
+
+          <td class="px-4 py-2">{{ student.last_name or '-' }}</td>
+          <td class="px-4 py-2">{{ student.parent_name or '-' }}</td>
+          <td class="px-4 py-2">{{ student.parent_phone or '-' }}</td>
+          <td class="px-4 py-2 font-medium">₵{{ student.total_fee or 0 }}</td>
+          <td class="px-4 py-2 text-green-600 font-medium">₵{{ student.total_paid or 0 }}</td>
+          <td class="px-4 py-2 text-red-600 font-medium">₵{{ student.balance or 0 }}</td>
+
+          <!--  Status badge: only show if a fee is actually assigned -->
+          <td class="px-4 py-2">
+            {% if student.total_fee %}
+              {% if student.status == 'Paid' %}
+                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Paid</span>
+              {% elif student.status == 'Partial' %}
+                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">Partial</span>
+              {% else %}
+                <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Not Paid</span>
+              {% endif %}
+            {% else %}
+              <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs font-semibold">No Fee Set</span>
+            {% endif %}
+          </td>
+
+          <!--  Guard against null created_at -->
+          <td class="px-4 py-2">
+            {{ student.created_at.strftime("%B %d, %Y") if student.created_at else '-' }}
+          </td>
+
+          <td class="px-4 py-2 flex gap-2 items-center flex-wrap">
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('student_edit', id=student.id) }}"
+               class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-sm">Edit</a>
+            <form action="{{ url_for('student_delete', id=student.id) }}" method="POST"
+                  onsubmit="return confirm('Are you sure you want to delete this student?');">
+              <button type="submit"
+                      class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
+            </form>
+            {% endif %}
+
+            <a href="{{ url_for('attendance', student_id=student.id) }}"
+               class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm">Attendance</a>
+
+            <a href="{{ url_for('student_attendance_report', student_id=student.id) }}"
+               class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm">Report</a>
+
+            <!--  Fee Modal: fixed all logic issues -->
+            <div x-data="feeModal({{ student.id }})" class="inline">
+              <button type="button" @click="open()"
+                      class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 text-sm">
+                Fees
+              </button>
+
+              <div x-show="isOpen" x-transition
+                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div @click.away="close()"
+                     class="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg max-h-[90vh] overflow-y-auto">
+
+                  <h3 class="text-lg font-semibold text-[var(--gcc-red)] mb-4">Fee Records</h3>
+
+                  <!--  Loading state -->
+                  <div x-show="loading" class="text-center py-4 text-gray-500">Loading...</div>
+
+                  <!--  Error state -->
+                  <div x-show="errorMsg" class="text-red-600 text-sm mb-3" x-text="errorMsg"></div>
+
+                  <!--  Success message -->
+                  <div x-show="successMsg"
+                       class="text-green-600 text-sm mb-3 font-semibold"
+                       x-text="successMsg"></div>
+
+                  <!--  Loop all fee structures, not just fees[0] -->
+                  <template x-for="fee in fees" :key="fee.student_fee_id">
+                    <div class="border rounded p-3 mb-4">
+
+                      <div class="flex justify-between text-sm font-semibold mb-1">
+                        <span x-text="`${fee.class_name} — ${fee.term} ${fee.academic_year}`"></span>
+                        <span :class="fee.status === 'Paid' ? 'text-green-600' :
+                                      fee.status === 'Partial' ? 'text-yellow-600' : 'text-red-600'"
+                              x-text="fee.status || 'Not Paid'">
+                        </span>
+                      </div>
+
+                      <div class="text-sm text-gray-600 mb-2">
+                        Total: <strong x-text="fee.total_fee.toFixed(2)"></strong> |
+                        Paid: <strong class="text-green-600" x-text="fee.total_paid.toFixed(2)"></strong> |
+                        Balance: <strong class="text-red-600" x-text="fee.balance.toFixed(2)"></strong>
+                      </div>
+
+                      <!--  Payment form only shown if balance > 0 -->
+                      <div x-show="fee.balance > 0">
+                        <form @submit.prevent="submitPayment(fee)" class="flex flex-col gap-2 mt-2">
+                          <input type="number"
+                                 x-model="fee._amount"
+                                 step="0.01"
+                                 min="0.01"
+                                 :max="fee.balance"
+                                 required
+                                 placeholder="Amount to pay"
+                                 class="border border-gray-300 rounded px-2 py-1 text-sm">
+
+                          <select x-model="fee._method"
+                                  class="border border-gray-300 rounded px-2 py-1 text-sm">
+                            <option value="Cash">Cash</option>
+                            <option value="Mobile Money">Mobile Money</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                          </select>
+
+                          <button type="submit"
+                                  :disabled="fee._submitting"
+                                  class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600 text-sm disabled:opacity-50">
+                            <span x-text="fee._submitting ? 'Processing...' : 'Record Payment'"></span>
+                          </button>
+                        </form>
+                      </div>
+
+                      <div x-show="fee.balance <= 0"
+                           class="text-green-600 text-sm font-semibold mt-1">
+                         Fully paid
+                      </div>
+
+                      <!-- Payment history per fee structure -->
+                      <div class="mt-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Payment History</p>
+                        <ul class="text-sm space-y-1">
+                          <template x-for="p in fee.payments" :key="p.id">
+                            <li class="flex justify-between border-b pb-1">
+                              <span x-text="`GHS ${parseFloat(p.amount_paid).toFixed(2)} via ${p.payment_method}`"></span>
+                              <span class="text-gray-400 text-xs" x-text="p.payment_date"></span>
+                            </li>
+                          </template>
+                          <li x-show="fee.payments.length === 0"
+                              class="text-gray-400 text-sm">No payments yet.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- No fees at all -->
+                  <div x-show="!loading && fees.length === 0"
+                       class="text-gray-500 text-sm text-center py-4">
+                    No fee structures assigned to this student.
+                  </div>
+
+                  <div class="flex justify-end mt-4">
+                    <button @click="close()"
+                            class="px-4 py-2 border rounded hover:bg-gray-100 text-sm">
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="11" class="text-center py-4 text-gray-500">No students found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!--  Pagination preserves search_query -->
+<div class="flex justify-center mt-6 gap-2 flex-wrap">
+  {% if page > 1 %}
+    <a href="{{ url_for('students', page=page-1, search=search_query) }}"
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+  {% endif %}
+
+  {% for p in range(1, total_pages + 1) %}
+    <a href="{{ url_for('students', page=p, search=search_query) }}"
+       class="px-3 py-1 rounded {% if p == page %}bg-[var(--gcc-red)] text-white{% else %}bg-gray-200 hover:bg-gray-300{% endif %}">
+      {{ p }}
+    </a>
+  {% endfor %}
+
+  {% if page < total_pages %}
+    <a href="{{ url_for('students', page=page+1, search=search_query) }}"
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+  {% endif %}
+</div>
+
+<!-- Import CSV -->
+<div class="mt-6 bg-white p-4 rounded shadow-md">
+  <h2 class="text-lg font-semibold text-[var(--gcc-red)] mb-2">Import Students via CSV</h2>
+  <form action="{{ url_for('import_students') }}" method="POST"
+        enctype="multipart/form-data"
+        class="flex flex-col sm:flex-row gap-2 items-center">
+    <input type="file" name="file" accept=".csv"
+           class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto">
+    <button type="submit"
+            class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition">
+      Upload
+    </button>
+  </form>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('feeModal', (studentId) => ({
+      isOpen: false,
+      loading: false,
+      fees: [],
+      errorMsg: '',
+      successMsg: '',
+
+      open() {
+        this.isOpen = true;
+        this.fetchFees();
+      },
+
+      close() {
+        this.isOpen = false;
+        this.errorMsg = '';
+        this.successMsg = '';
+      },
+
+      fetchFees() {
+        this.loading = true;
+        this.errorMsg = '';
+
+        fetch(`/api/student/${studentId}/fees`)
+          .then(res => res.json())
+          .then(data => {
+            //  Initialize per-fee form state
+            this.fees = data.fees.map(fee => ({
+              ...fee,
+              _amount: '',
+              _method: 'Cash',
+              _submitting: false
+            }));
+          })
+          .catch(() => {
+            this.errorMsg = 'Failed to load fee data. Please try again.';
+          })
+          .finally(() => {
+            this.loading = false;
+          });
+      },
+
+      submitPayment(fee) {
+        //  Amount sent as float, not string
+        const amount = parseFloat(fee._amount);
+
+        if (!amount || amount <= 0) {
+          this.errorMsg = 'Please enter a valid amount.';
+          return;
+        }
+        if (amount > fee.balance) {
+          this.errorMsg = `Amount cannot exceed the balance of ${fee.balance.toFixed(2)}.`;
+          return;
+        }
+
+        this.errorMsg = '';
+        this.successMsg = '';
+        fee._submitting = true;
+
+        fetch(`/fees/${fee.student_fee_id}/pay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: amount, method: fee._method })
+        })
+        .then(res => {
+          if (!res.ok) return res.json().then(e => { throw new Error(e.error || 'Payment failed'); });
+          return res.json();
+        })
+        .then(data => {
+          //  Update only this fee record, not the whole list
+          fee.balance = data.new_balance;
+          fee.total_paid = data.total_paid;
+          fee.status = data.new_status;
+          fee.payments = data.payments;
+          fee._amount = '';
+          this.successMsg = `Payment of GHS ${amount.toFixed(2)} recorded successfully!`;
+        })
+        .catch(err => {
+          this.errorMsg = err.message;
+        })
+        .finally(() => {
+          fee._submitting = false;
+        });
+      }
+    }));
+  });
+</script>
+{% endblock %}

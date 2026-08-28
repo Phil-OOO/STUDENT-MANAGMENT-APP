@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <h1 class="text-2xl font-bold text-[var(--gcc-red)]">Student Details</h1>
+    <div class="flex gap-2 flex-wrap">
+      <a href="{{ url_for('students') }}"
+         class="bg-white border border-[var(--gcc-red)] text-[var(--gcc-red)] px-4 py-2 rounded hover:bg-[var(--gcc-red)] hover:text-white transition text-sm">
+        ← Back to Students
+      </a>
+      {% if current_user.is_admin() %}
+      <button id="editBtn"
+              class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition text-sm">
+        Edit Student
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+
+    <!-- Left: Student Card -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+
+      <!-- Profile Picture -->
+      <div class="flex justify-center mb-6">
+        <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--gcc-red)] bg-gray-100 flex items-center justify-center">
+          {% if student.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' ~ student.profile_picture) }}"
+                 alt="Profile"
+                 class="w-full h-full object-cover">
+          {% else %}
+            <!-- ✅ Safe avatar: guard last_name before accessing index -->
+            <span class="text-[var(--gcc-red)] text-3xl font-bold">
+              {{ student.first_name[0] | upper }}{{ (student.last_name[0] | upper) if student.last_name else '' }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- View Mode -->
+      <div id="viewMode">
+        <div class="mb-4 text-center">
+          <h2 class="text-xl font-semibold text-gray-700">
+            {{ student.first_name }} {{ student.last_name or '' }}
+          </h2>
+          <!-- Guard against null created_at -->
+          <p class="text-sm text-gray-500">
+            Enrolled: {{ student.created_at.strftime("%B %d, %Y") if student.created_at else 'Unknown' }}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-2">
+          <div class="flex justify-between border-b py-2">
+            <span class="font-semibold text-gray-600">First Name</span>
+            <span>{{ student.first_name }}</span>
+          </div>
+          <div class="flex justify-between border-b py-2">
+            <span class="font-semibold text-gray-600">Last Name</span>
+            <span>{{ student.last_name or '-' }}</span>
+          </div>
+          <div class="flex justify-between border-b py-2">
+            <span class="font-semibold text-gray-600">Parent Name</span>
+            <span>{{ student.parent_name or '-' }}</span>
+          </div>
+          <div class="flex justify-between border-b py-2">
+            <span class="font-semibold text-gray-600">Parent Phone</span>
+            <span>{{ student.parent_phone or '-' }}</span>
+          </div>
+          <div class="flex justify-between border-b py-2">
+            <span class="font-semibold text-gray-600">School</span>
+            <span>{{ student.school_name or '-' }}</span>
+          </div>
+        </div>
+
+        <!-- ✅ Quick action buttons -->
+        <div class="mt-6 flex flex-wrap gap-2">
+          <a href="{{ url_for('attendance', student_id=student.id) }}"
+             class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">
+            Mark Attendance
+          </a>
+          <a href="{{ url_for('student_attendance_report', student_id=student.id) }}"
+             class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">
+            Attendance Report
+          </a>
+          {% if current_user.is_admin() %}
+          <!-- ✅ Assign Fee button — the missing link -->
+          <a href="{{ url_for('assign_fee', student_id=student.id) }}"
+             class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600 text-sm">
+            Assign Fee
+          </a>
+          <form action="{{ url_for('student_delete', id=student.id) }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to delete this student? This cannot be undone.');">
+            <button type="submit"
+                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
+              Delete
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      {% if current_user.is_admin() %}
+      <form id="editMode"
+            class="hidden mt-4 grid grid-cols-1 gap-4"
+            method="POST"
+            action="{{ url_for('student_edit', id=student.id) }}"
+            enctype="multipart/form-data">
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Profile Picture</label>
+          <input type="file" name="profile_picture" accept="image/*"
+                 class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+          {% if student.profile_picture %}
+          <p class="text-xs text-gray-400 mt-1">Current picture will be kept if no new file is chosen.</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">First Name <span class="text-red-500">*</span></label>
+          <!-- ✅ 'or' prevents literal "None" in input value -->
+          <input type="text" name="first_name" required
+                 value="{{ student.first_name or '' }}"
+                 class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Last Name</label>
+          <input type="text" name="last_name"
+                 value="{{ student.last_name or '' }}"
+                 class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Parent Name</label>
+          <input type="text" name="parent_name"
+                 value="{{ student.parent_name or '' }}"
+                 class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Parent Phone</label>
+          <input type="text" name="parent_phone"
+                 value="{{ student.parent_phone or '' }}"
+                 class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button type="button" id="cancelEdit"
+                  class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition text-sm">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="bg-[var(--gcc-red)] text-white px-4 py-2 rounded hover:bg-red-700 transition text-sm">
+            Save Changes
+          </button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Right: Fee Summary -->
+    <div class="bg-white shadow-md rounded-lg p-6"
+         x-data="feeSummary({{ student.id }})"
+         x-init="fetchFees()">
+
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-[var(--gcc-red)]">Fee Summary</h2>
+        <button @click="fetchFees()"
+                class="text-xs text-gray-400 hover:text-gray-600 underline">
+          Refresh
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div x-show="loading" class="text-center text-gray-400 py-6">Loading fees...</div>
+
+      <!-- Error -->
+      <div x-show="errorMsg" class="text-red-500 text-sm" x-text="errorMsg"></div>
+
+      <!-- No fees -->
+      <div x-show="!loading && fees.length === 0 && !errorMsg"
+           class="text-gray-400 text-sm text-center py-6">
+        No fees assigned yet.
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('assign_fee', student_id=student.id) }}"
+           class="block mt-2 text-purple-500 underline hover:text-purple-700">
+          Assign a fee structure →
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Fee cards -->
+      <template x-for="fee in fees" :key="fee.student_fee_id">
+        <div class="border rounded p-3 mb-3">
+
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-semibold text-sm"
+                  x-text="`${fee.class_name} — ${fee.term} ${fee.academic_year}`"></span>
+            <span class="text-xs px-2 py-0.5 rounded font-semibold"
+                  :class="{
+                    'bg-green-100 text-green-700': fee.status === 'Paid',
+                    'bg-yellow-100 text-yellow-700': fee.status === 'Partial',
+                    'bg-red-100 text-red-700': fee.status === 'Not Paid' || !fee.status
+                  }"
+                  x-text="fee.status || 'Not Paid'">
+            </span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+            <div class="h-2 rounded-full transition-all"
+                 :class="fee.status === 'Paid' ? 'bg-green-500' : 'bg-yellow-400'"
+                 :style="`width: ${fee.total_fee > 0 ? Math.min((fee.total_paid / fee.total_fee) * 100, 100) : 0}%`">
+            </div>
+          </div>
+
+          <div class="flex justify-between text-xs text-gray-500 mb-3">
+            <span>Total: <strong x-text="`GHS ${fee.total_fee.toFixed(2)}`"></strong></span>
+            <span>Paid: <strong class="text-green-600" x-text="`GHS ${fee.total_paid.toFixed(2)}`"></strong></span>
+            <span>Balance: <strong class="text-red-600" x-text="`GHS ${fee.balance.toFixed(2)}`"></strong></span>
+          </div>
+
+          <!-- Payment form -->
+          <div x-show="fee.balance > 0">
+            <form @submit.prevent="submitPayment(fee)" class="flex flex-col gap-2">
+              <input type="number"
+                     x-model="fee._amount"
+                     step="0.01" min="0.01"
+                     :max="fee.balance"
+                     required
+                     placeholder="Amount"
+                     class="border border-gray-300 rounded px-2 py-1 text-sm w-full">
+              <select x-model="fee._method"
+                      class="border border-gray-300 rounded px-2 py-1 text-sm">
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+              <button type="submit"
+                      :disabled="fee._submitting"
+                      class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600 text-sm disabled:opacity-50">
+                <span x-text="fee._submitting ? 'Processing...' : 'Record Payment'"></span>
+              </button>
+            </form>
+          </div>
+
+          <div x-show="fee.balance <= 0"
+               class="text-green-600 text-sm font-semibold text-center py-1">
+            ✅ Fully Paid
+          </div>
+
+          <!-- Payment history -->
+          <div class="mt-3 border-t pt-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Payment History</p>
+            <template x-for="p in fee.payments" :key="p.id">
+              <div class="flex justify-between text-xs border-b pb-1 mb-1">
+                <span x-text="`GHS ${parseFloat(p.amount_paid).toFixed(2)} via ${p.payment_method}`"></span>
+                <span class="text-gray-400" x-text="p.payment_date"></span>
+              </div>
+            </template>
+            <p x-show="fee.payments.length === 0"
+               class="text-gray-400 text-xs">No payments recorded yet.</p>
+          </div>
+        </div>
+      </template>
+
+      <!-- Success / error feedback -->
+      <div x-show="successMsg"
+           class="mt-2 text-green-600 text-sm font-semibold"
+           x-text="successMsg"></div>
+      <div x-show="payError"
+           class="mt-2 text-red-500 text-sm"
+           x-text="payError"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+  // ---- Edit / View toggle ----
+  const editBtn    = document.getElementById("editBtn");
+  const cancelBtn  = document.getElementById("cancelEdit");
+  const viewMode   = document.getElementById("viewMode");
+  const editMode   = document.getElementById("editMode");
+
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      viewMode.classList.add("hidden");
+      editMode.classList.remove("hidden");
+    });
+  }
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      editMode.classList.add("hidden");
+      viewMode.classList.remove("hidden");
+    });
+  }
+
+  // ---- Fee summary Alpine component ----
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('feeSummary', (studentId) => ({
+      fees: [],
+      loading: false,
+      errorMsg: '',
+      successMsg: '',
+      payError: '',
+
+      fetchFees() {
+        this.loading = true;
+        this.errorMsg = '';
+        fetch(`/api/student/${studentId}/fees`)
+          .then(res => res.json())
+          .then(data => {
+            this.fees = data.fees.map(fee => ({
+              ...fee,
+              _amount: '',
+              _method: 'Cash',
+              _submitting: false
+            }));
+          })
+          .catch(() => {
+            this.errorMsg = 'Failed to load fee data.';
+          })
+          .finally(() => {
+            this.loading = false;
+          });
+      },
+
+      submitPayment(fee) {
+        const amount = parseFloat(fee._amount);
+        this.payError = '';
+        this.successMsg = '';
+
+        if (!amount || amount <= 0) {
+          this.payError = 'Enter a valid amount.';
+          return;
+        }
+        if (amount > fee.balance) {
+          this.payError = `Amount exceeds balance of GHS ${fee.balance.toFixed(2)}.`;
+          return;
+        }
+
+        fee._submitting = true;
+        fetch(`/fees/${fee.student_fee_id}/pay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, method: fee._method })
+        })
+        .then(res => {
+          if (!res.ok) return res.json().then(e => { throw new Error(e.error || 'Failed'); });
+          return res.json();
+        })
+        .then(data => {
+          fee.balance    = data.new_balance;
+          fee.total_paid = data.total_paid;
+          fee.status     = data.new_status;
+          fee.payments   = data.payments;
+          fee._amount    = '';
+          this.successMsg = `Payment of GHS ${amount.toFixed(2)} recorded!`;
+        })
+        .catch(err => {
+          this.payError = err.message;
+        })
+        .finally(() => {
+          fee._submitting = false;
+        });
+      }
+    }));
+  });
+</script>
+{% endblock %}
